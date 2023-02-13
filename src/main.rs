@@ -1,7 +1,8 @@
+use std::error::Error;
 use std::fs::File;
 use std::io::{self, Write};
 
-use chrono::{Datelike, Weekday};
+use chrono::Datelike;
 
 const VERTICAL_LINE: &str = "|";
 const EOL: &str = "\n";
@@ -27,35 +28,35 @@ fn read_month() -> u32 {
     month.trim().parse().unwrap()
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let year = read_year();
     let month = read_month();
 
     let calendar = Calendar::new(year, month);
 
-    calendar.write_to_file();
+    calendar.write_to_file()?;
 
-    // println!("{}", calendar.cal_text);
+    Ok(())
 }
 
 struct Month;
 
 impl Month {
-    fn name(month: u32) -> &'static str {
+    fn name(month: u32) -> Result<&'static str, String> {
         match month {
-            1 => "January",
-            2 => "February",
-            3 => "March",
-            4 => "April",
-            5 => "May",
-            6 => "June",
-            7 => "July",
-            8 => "August",
-            9 => "September",
-            10 => "October",
-            11 => "November",
-            12 => "December",
-            _ => panic!("Invalid month"),
+            1 => Ok("January"),
+            2 => Ok("February"),
+            3 => Ok("March"),
+            4 => Ok("April"),
+            5 => Ok("May"),
+            6 => Ok("June"),
+            7 => Ok("July"),
+            8 => Ok("August"),
+            9 => Ok("September"),
+            10 => Ok("October"),
+            11 => Ok("November"),
+            12 => Ok("December"),
+            _ => Err(format!("Invalid month: {}", month)),
         }
     }
 }
@@ -124,13 +125,13 @@ impl Calendar {
         Calendar { year, month, weeks }
     }
 
-    fn to_string(&self) -> String {
+    fn to_string(&self) -> Result<String, Box<dyn Error>> {
         let mut cal_text = String::new();
 
         cal_text.push_str(&format!(
             "{} {} {}",
             SPACE.repeat(34),
-            Month::name(self.month),
+            Month::name(self.month)?,
             self.year
         ));
         cal_text.push_str(EOL);
@@ -143,12 +144,13 @@ impl Calendar {
 
         cal_text.push_str(WEEK_SEPARATOR);
 
-        return cal_text;
+        Ok(cal_text)
     }
 
-    fn write_to_file(&self) {
+    fn write_to_file(&self) -> Result<(), Box<dyn Error>> {
         let file_name = format!("calendar_{}_{}.txt", self.year, self.month);
         let mut file = File::create(file_name).unwrap();
-        file.write_all(self.to_string().as_bytes()).unwrap();
+        file.write_all(self.to_string()?.as_bytes()).unwrap();
+        Ok(())
     }
 }
